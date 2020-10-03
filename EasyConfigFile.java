@@ -161,24 +161,23 @@ public class EasyConfigFile {
 	public String getStringColored(String path) {
 		return getString(path).replace("&", "§");
 	}
+
 	public String getString(String path) {
-		return getString(path, null);
+		return getString(path, "");
 	}
-	public String getString(String path, String ifNull) {
-		return getString(path, (Object)ifNull);
-	}
-	public String getString(String path, Object o) {
+	
+	public String getString(String path, String flags) {
 		String string = null;
 		try {
 			string = (String)config.get(path);
 		}catch (Exception e) {
-			if(o instanceof String) {
-				string = (String)o;
-				if (isDefault)	getObjectErrorMessage("string",path);
+			if(!getStringIfNull(flags).equals("")) {
+				string = getStringIfNull(flags);
+				if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("string",path);
 			}
 			else {
 				try {
-					if (isDefault)	getObjectErrorMessage("string",path);
+					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("string",path);
 					fix(path);
 					string = (String)config.get(path);
 				}catch (Exception exception) {
@@ -188,25 +187,34 @@ public class EasyConfigFile {
 		}
 		return string;
 	}
+	
+	private String getStringIfNull(String flags){
+		String s = "";
+		String[] splited = flags.split("/,");
+		for(String sp : splited) {
+			if(sp.contains("ifNull:")) {
+				s = sp.replace("ifNull:", "");
+			}
+		}
+		return s;
+	}
 	//==================== Integer  ==================== //
 	public int getInt(String path) {
-		return getInt(path,null);
+		return getInt(path,"");
 	}
-	public int getInt(String path, int ifNull) {
-		return getInt(path,(Object)ifNull);
-	}
-	public int getInt(String path, Object o) {
+	
+	public int getInt(String path, String flags) {
 		int i;
 		try {
 			i = (int) config.get(path);
 		}catch (Exception e) {
-			if(o instanceof Integer) {
-				i = (Integer)o;
-				if (isDefault)	getObjectErrorMessage("integer",path);
+			if(flags.contains("ifNull:")) {
+				i = getIntIfNull(flags);
+				if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
 			}
 			else {
 				try {
-					if (isDefault)	getObjectErrorMessage("integer",path);
+					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
 					fix(path);
 					i = (int) config.get(path);
 				}catch (Exception exception) {
@@ -218,31 +226,54 @@ public class EasyConfigFile {
 		return i;
 	}
 	
+	private int getIntIfNull(String flags){
+		int i = 0;
+		String[] splited = flags.split("/,");
+		for(String sp : splited) {
+			if(sp.contains("ifNull:")) {
+				i = Integer.getInteger(sp.replace("ifNull:", ""));
+			}
+		}
+		return i;
+	}
+	
 	//==================== Double  ==================== //
 	public double getDouble(String path) {
 		return getDouble(path,null);
 	}
-	public double getDouble(String path, double ifNull) {
-		return getDouble(path,(Object)ifNull);
-	}
-	public double getDouble(String path, Object o) {
-		double d;
+	public double getDouble(String path, String flags) {
+		double d = 0;
 		try {
 			d = (double) config.get(path);
 		}catch (Exception e) {
-			if(o instanceof Double) {
-				d = (Integer)o;
-				if (isDefault)	getObjectErrorMessage("double",path);
-			}
-			else {
-				try {
-					if (isDefault)	getObjectErrorMessage("object",path);
-					fix(path);
-					d = (double) config.get(path);
-				}catch (Exception exception) {
-					d = 0;
-					errorMsg(exception);
+			try {
+				d = (int) config.get(path);
+			}catch (Exception e2) {
+				if(flags.contains("ifNull:")) {
+					d = getDoubleIfNull(flags);
+					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
 				}
+				else {
+					try {
+						if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
+						fix(path);
+						d = (double) config.get(path);
+					}catch (Exception exception) {
+						d = 0;
+						errorMsg(exception);
+					}
+				}
+			}
+		}
+		return d;
+	}
+	
+	private double getDoubleIfNull(String flags){
+		double d = 0;
+		String[] splited = flags.split("/,");
+		for(String sp : splited) {
+			if(sp.contains("ifNull:")) {
+				d = Double.valueOf(sp.replace("ifNull:", ""));
 			}
 		}
 		return d;
