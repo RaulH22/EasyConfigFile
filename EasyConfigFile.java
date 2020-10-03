@@ -1,18 +1,20 @@
-package me.RaulH22;
+package me.RaulH22.ComplexFishing.a;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-// ConfigFileYML v2.3
+// ConfigFileYML v2.5
 public class EasyConfigFile {
 
 	//================================================ Variables ================================================ //
@@ -163,21 +165,21 @@ public class EasyConfigFile {
 	}
 
 	public String getString(String path) {
-		return getString(path, "");
+		return getString(path, getFlags());
 	}
 	
-	public String getString(String path, String flags) {
+	public String getString(String path, Map<String,String> flags) {
 		String string = null;
 		try {
 			string = (String)config.get(path);
 		}catch (Exception e) {
 			if(!getStringIfNull(flags).equals("")) {
 				string = getStringIfNull(flags);
-				if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("string",path);
+				if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("string",path);
 			}
 			else {
 				try {
-					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("string",path);
+					if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("string",path);
 					fix(path);
 					string = (String)config.get(path);
 				}catch (Exception exception) {
@@ -188,33 +190,27 @@ public class EasyConfigFile {
 		return string;
 	}
 	
-	private String getStringIfNull(String flags){
-		String s = "";
-		String[] splited = flags.split("/,");
-		for(String sp : splited) {
-			if(sp.contains("ifNull:")) {
-				s = sp.replace("ifNull:", "");
-			}
-		}
-		return s;
+	private String getStringIfNull(Map<String,String> flags){
+		if(flags.containsKey("ifNull")) return flags.get("ifNull");
+		else return "";
 	}
 	//==================== Integer  ==================== //
 	public int getInt(String path) {
-		return getInt(path,"");
+		return getInt(path,getFlags());
 	}
 	
-	public int getInt(String path, String flags) {
+	public int getInt(String path, Map<String,String> flags) {
 		int i;
 		try {
 			i = (int) config.get(path);
 		}catch (Exception e) {
-			if(flags.contains("ifNull:")) {
+			if(flags.containsKey("ifNull")) {
 				i = getIntIfNull(flags);
-				if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
+				if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("integer",path);
 			}
 			else {
 				try {
-					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
+					if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("integer",path);
 					fix(path);
 					i = (int) config.get(path);
 				}catch (Exception exception) {
@@ -226,22 +222,16 @@ public class EasyConfigFile {
 		return i;
 	}
 	
-	private int getIntIfNull(String flags){
-		int i = 0;
-		String[] splited = flags.split("/,");
-		for(String sp : splited) {
-			if(sp.contains("ifNull:")) {
-				i = Integer.getInteger(sp.replace("ifNull:", ""));
-			}
-		}
+	private int getIntIfNull(Map<String,String> flags){
+		int i = Integer.getInteger(flags.get("ifNull"));
 		return i;
 	}
 	
 	//==================== Double  ==================== //
 	public double getDouble(String path) {
-		return getDouble(path,null);
+		return getDouble(path,getFlags());
 	}
-	public double getDouble(String path, String flags) {
+	public double getDouble(String path, Map<String,String> flags) {
 		double d = 0;
 		try {
 			d = (double) config.get(path);
@@ -249,13 +239,13 @@ public class EasyConfigFile {
 			try {
 				d = (int) config.get(path);
 			}catch (Exception e2) {
-				if(flags.contains("ifNull:")) {
+				if(flags.containsKey("ifNull")) {
 					d = getDoubleIfNull(flags);
-					if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
+					if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("double",path);
 				}
 				else {
 					try {
-						if ( (isDefault && !flags.contains("-n")) || flags.contains("+n") ) getObjectErrorMessage("integer",path);
+						if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("double",path);
 						fix(path);
 						d = (double) config.get(path);
 					}catch (Exception exception) {
@@ -267,42 +257,66 @@ public class EasyConfigFile {
 		}
 		return d;
 	}
+
+	private double getDoubleIfNull(Map<String,String> flags) {
+		double i = Double.valueOf(flags.get("ifNull"));
+		return i;
+	}
 	
-	private double getDoubleIfNull(String flags){
-		double d = 0;
-		String[] splited = flags.split("/,");
-		for(String sp : splited) {
-			if(sp.contains("ifNull:")) {
-				d = Double.valueOf(sp.replace("ifNull:", ""));
+	//==================== Long  ==================== //
+	public double getLong(String path) {
+		return getLong(path,getFlags());
+	}
+	
+	public long getLong(String path, Map<String,String> flags) {
+		long l = 0;
+		try {
+			l = (long) config.get(path);
+		}catch (Exception e) {
+			try {
+				l = (int) config.get(path);
+			}catch (Exception e2) {
+				if(flags.containsKey("ifNull")) {
+					l = getLongIfNull(flags);
+					if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("long",path);
+				}
+				else {
+					try {
+						if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("long",path);
+						fix(path);
+						l = (long) config.get(path);
+					}catch (Exception exception) {
+						l = 0;
+						errorMsg(exception);
+					}
+				}
 			}
 		}
-		return d;
-	}
-	//==================== Long  ==================== //
-	public long getLong(String path) {
-		if(config.get(path)==null&&isDefault) {
-			fix(path);
-		}
-		long l = (long) config.get(path);
 		return l;
 	}
+	
+	private long getLongIfNull(Map<String,String> flags) {
+		long i = Long.valueOf(flags.get("ifNull"));
+		return i;
+	}
+	
 	//==================== Boolean  ==================== //
 
 	public boolean getBoolean(String path) {
-		return getBoolean(path, null);
+		return getBoolean(path, getFlags());
 	}
-	public boolean getBoolean(String path , Object ifNull) {
+	public boolean getBoolean(String path ,  Map<String,String> flags) {
 		boolean b;
 		try {
 			b = (boolean) config.get(path);
 		}catch (Exception e) {
-			if(ifNull instanceof Boolean) {
-				b = (Boolean) ifNull;
-				if (isDefault)	getObjectErrorMessage("boolean",path);
+			if(flags.containsKey("ifNull")) {
+				b = getBooleanIfNull(flags);
+				if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("boolean",path);
 			}
 			else {
 				try {
-					if (isDefault)	getObjectErrorMessage("boolean",path);
+					if ( (isDefault && !flags.containsKey("notify")) || flags.get("notify").equals("true") ) getObjectErrorMessage("boolean",path);
 					fix(path);
 					b = (boolean) config.get(path);
 				}catch (Exception exception) {
@@ -311,6 +325,12 @@ public class EasyConfigFile {
 				}
 			}
 		}
+		return b;
+	}
+	
+
+	private boolean getBooleanIfNull(Map<String,String> flags) {
+		boolean b = Boolean.valueOf(flags.get("ifNull"));
 		return b;
 	}
 	//==================== Object  ==================== //
@@ -541,4 +561,9 @@ public class EasyConfigFile {
 			}
 			return oldFilePath;
 		}
+		
+		public static Map<String,String> getFlags() {
+			return new HashMap<>();
+		}
+		
 }
